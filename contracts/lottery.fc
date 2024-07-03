@@ -43,7 +43,7 @@ int unsafe_random_biased_coin() inline {
     ;; not sure if we have to always do ~load_uint (extracting flags) before ~load_msg_addr
     cs~load_uint(4);
     slice sender = cs~load_msg_addr();
-    int balance = get_balance();
+    [int balance, _] = get_balance();
 
     ;; bet
     ;; presumably, will only work with a non-empty message passed (otherwise, in_msg_body.slice_empty?() will be true);
