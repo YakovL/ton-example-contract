@@ -12,7 +12,7 @@ int unsafe_random_biased_coin() inline {
     return rand(10) > 5;
 }
 
-() send_funds(slice to, int amount) inline {
+() send_funds(slice to, int amount) impure inline {
     send_raw_message(
         begin_cell()
             ;; magic numbers are explained at https://docs.ton.org/develop/smart-contracts/messages
