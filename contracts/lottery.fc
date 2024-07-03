@@ -1,4 +1,80 @@
 #include "imports/stdlib.fc";
 
+const fixed_stake = 1000000000; ;; 1 TON
+;; TODO: estimate how much gas is needed to send them their winnings
+const rough_gas_upper_limit = 10000000; ;; 0.01 TON
+const owner_address = "UQDTMMO6S7moBBtAgQQgXtfIN4hF83DF72O8vHO80G1CFsWp"a;
+
+;; safer implementations require various techniques, see https://docs.ton.org/develop/smart-contracts/guidelines/random-number-generation
+;; returns 1 for user win (0.4 probability) and 0 for loss (0.6 probability)
+int unsafe_random_biased_coin() inline {
+    randomize_lt();
+    return rand(10) > 5;
+}
+
+() send_funds(slice to, int amount) inline {
+    send_raw_message(
+        begin_cell()
+            ;; magic numbers are explained at https://docs.ton.org/develop/smart-contracts/messages
+            .store_uint(0x18, 6)
+            .store_slice(to)
+            .store_coins(amount)
+            ;; default message headers
+            .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
+            ;; no message body
+        .end_cell(),
+        ;; ignore errors & pay fees separately (https://docs.ton.org/develop/smart-contracts/messages#message-modes)
+        3
+    );
+}
+
 () recv_internal(int my_balance, int msg_value, cell in_msg_full, slice in_msg_body) impure {
+    ;; accept empty messages (sending TON to contract balance)
+    if (in_msg_body.slice_empty?()) {
+        return ();
+    }
+
+    ;; TODO: what will happen if we get in_msg_body smaller than 32 bits? should we throw something like code 2? will it be thrown automatically?
+    ;; see: https://tonresear.ch/t/create-smart-contracts-on-ton-lesson-1-simple-smart-contract/427#generating-exceptions-14
+    int operation_type = in_msg_body~load_uint(32);
+    ;; after 32-bit op, there's 64-bit query_id, and then optional payload: https://docs.ton.org/develop/smart-contracts/guidelines/internal-messages#internal-message-body
+
+    var cs = in_msg_full.begin_parse();
+    ;; not sure if we have to always do ~load_uint (extracting flags) before ~load_msg_addr
+    cs~load_uint(4);
+    slice sender = cs~load_msg_addr();
+    int balance = get_balance();
+
+    ;; bet
+    ;; presumably, will only work with a non-empty message passed (otherwise, in_msg_body.slice_empty?() will be true);
+    ;; see also approach  equal_slice_bits(in_msg_body, "bet")  in https://docs.ton.org/develop/smart-contracts/guidelines/random-number-generation
+    if (operation_type == 0) {
+        ;; currently using http-like codes
+        ;; ? should we reuse any of https://docs.ton.org/learn/tvm-instructions/tvm-exit-codes ? built-in no constants for error codes yet?
+        ;; ? can we pass a human-readable message? where codes are typically documented? in wrappers?
+        throw_if(501, balance < fixed_stake + rough_gas_upper_limit);
+
+        throw_if(400, msg_value != fixed_stake);
+
+        ;; if needed, implement the echo-random and handle bounced messages accordingly (still not 100% safe):
+        ;; https://docs.ton.org/develop/smart-contracts/guidelines/random-number-generation
+        int user_won = unsafe_random_biased_coin();
+        if (user_won) {
+            send_funds(sender, fixed_stake * 2);
+        }
+        return ();
+    }
+
+    ;; withdraw
+    if (operation_type == 1) {
+        ;; TODO: test if these match (and if owner_address can be passed send_funds – as slice)
+        throw_if(403, sender != owner_address);
+
+        ;; TODO: support withdrawing custom amount
+        int amount_to_send = balance - rough_gas_upper_limit;
+        if (amount_to_send > 0) {
+            send_funds(owner_address, fixed_stake * 2);
+        }
+        return ();
+    }
 }
