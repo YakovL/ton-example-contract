@@ -5,6 +5,9 @@ const fixed_stake = 1000000000; ;; 1 TON
 const rough_gas_upper_limit = 10000000; ;; 0.01 TON
 const owner_address = "UQDTMMO6S7moBBtAgQQgXtfIN4hF83DF72O8vHO80G1CFsWp"a;
 
+;; https://docs.ton.org/develop/func/cookbook#determine-if-slices-are-equal
+int are_slices_equal? (slice a, slice b) asm "SDEQ";
+
 ;; safer implementations require various techniques, see https://docs.ton.org/develop/smart-contracts/guidelines/random-number-generation
 ;; returns 1 for user win (0.4 probability) and 0 for loss (0.6 probability)
 int unsafe_random_biased_coin() inline {
@@ -68,7 +71,7 @@ int unsafe_random_biased_coin() inline {
     ;; withdraw
     if (operation_type == 1) {
         ;; TODO: test if these match (and if owner_address can be passed send_funds – as slice)
-        throw_if(403, sender != owner_address);
+        throw_if(403, are_slices_equal?(sender, owner_address) == 0);
 
         ;; TODO: support withdrawing custom amount
         int amount_to_send = balance - rough_gas_upper_limit;
