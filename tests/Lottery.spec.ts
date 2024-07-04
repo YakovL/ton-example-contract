@@ -82,7 +82,7 @@ describe('Lottery', () => {
     it('should just increase balance when a message with no op-code is sent', async () => {
         const senderBalanceBefore = await deployer.getBalance();
         const contractBalanceBefore = await lottery.getBalance();
-        const amount = toNano('1.5')
+        const amount = Lottery.fixedStake;
 
         // no special method for sending funds, but sendDeploy does exactly that
         await lottery.sendDeploy(deployer.getSender(), amount);
