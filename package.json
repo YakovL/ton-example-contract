@@ -4,9 +4,11 @@
     "scripts": {
         "start": "blueprint run",
         "build": "blueprint build",
+        "bytecode": "func-js contracts/lottery.fc --boc build/lottery.cell",
         "test": "jest --verbose"
     },
     "devDependencies": {
+        "@ton-community/func-js": "^0.7.0",
         "@ton/blueprint": "^0.21.0",
         "@ton/sandbox": "^0.19.0",
         "@ton/test-utils": "^0.4.2",
