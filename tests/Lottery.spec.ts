@@ -78,4 +78,26 @@ describe('Lottery', () => {
         expect(balancesSumChange).toBeLessThan(0n);
         expect(balancesSumChange).toBeGreaterThan(-expectedGasMargin - expectedGasMargin);
     });
+
+    it('should just increase balance when a message with no op-code is sent', async () => {
+        const senderBalanceBefore = await deployer.getBalance();
+        const contractBalanceBefore = await lottery.getBalance();
+        const amount = toNano('1.5')
+
+        // no special method for sending funds, but sendDeploy does exactly that
+        await lottery.sendDeploy(deployer.getSender(), amount);
+
+        const senderBalanceAfter = await deployer.getBalance();
+        const contractBalanceAfter = await lottery.getBalance();
+        const contractRecieved = contractBalanceAfter - contractBalanceBefore;
+        const senderSpent = senderBalanceBefore - senderBalanceAfter;
+
+        // sender spends gas
+        expect(senderSpent).toBeGreaterThan(amount);
+        expect(senderSpent).toBeLessThan(amount + toNano('0.01'));
+
+        // contract still spends gas to check in_msg_body.slice_empty?()
+        expect(contractRecieved).toBeLessThan(amount);
+        expect(contractRecieved).toBeGreaterThan(amount - toNano('0.01'));
+    });
 });
