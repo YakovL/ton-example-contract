@@ -9,6 +9,4 @@ export async function run(provider: NetworkProvider) {
     await lottery.sendDeploy(provider.sender(), twoBetsPlusMargin);
 
     await provider.waitForDeploy(lottery.address);
-
-    // run methods on `lottery`
 }
