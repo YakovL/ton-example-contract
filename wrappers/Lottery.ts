@@ -1,4 +1,10 @@
-import { Address, beginCell, Cell, Contract, contractAddress, ContractProvider, Sender, SendMode } from '@ton/core';
+import {
+    Address,
+    Cell, beginCell,
+    Contract, contractAddress, ContractProvider,
+    Sender, SendMode,
+    toNano,
+} from '@ton/core';
 
 export type LotteryConfig = {};
 
@@ -18,6 +24,9 @@ export class Lottery implements Contract {
         const init = { code, data };
         return new Lottery(contractAddress(workchain, init), init);
     }
+
+    // WET: must be equal to fixed_stake in the contract
+    static readonly fixedStake = toNano('1');
 
     async sendDeploy(provider: ContractProvider, via: Sender, value: bigint) {
         await provider.internal(via, {

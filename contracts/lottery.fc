@@ -1,5 +1,6 @@
 #include "imports/stdlib.fc";
 
+;; WET: must be equal to fixedStake in the contract's wrapper
 const fixed_stake = 1000000000; ;; 1 TON
 ;; TODO: estimate how much gas is needed to send them their winnings
 const rough_gas_upper_limit = 10000000; ;; 0.01 TON

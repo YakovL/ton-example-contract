@@ -22,7 +22,7 @@ describe('Lottery', () => {
 
         deployer = await blockchain.treasury('deployer');
 
-        const deployResult = await lottery.sendDeploy(deployer.getSender(), toNano('0.05'));
+        const deployResult = await lottery.sendDeploy(deployer.getSender(), Lottery.fixedStake * 2n + toNano('0.05'));
 
         expect(deployResult.transactions).toHaveTransaction({
             from: deployer.address,
@@ -36,4 +36,5 @@ describe('Lottery', () => {
         // the check is done inside beforeEach
         // blockchain and lottery are ready to use
     });
+        const wrongBetResult = await lottery.sendBet_(deployer.getSender(), Lottery.fixedStake + toNano('0.01'));
 });
